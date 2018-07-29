@@ -14,7 +14,6 @@ def find_user(mongo, condition=None):
 
 def insert_user(mongo, user):
     user.events_to_dict()
-    #??????????????????????????????????????????????????????
     mongo.db.user.insert(user.model)
 
 
@@ -30,21 +29,19 @@ def delete_user(mongo, condition=None):
 
 def request_to_class(json_request):
     user = User()
-    id = json_request.get('id', None)
-    name = json_request.get('name', {})
+    name = json_request.get('name', None)
     information_datas = json_request.get('information', {})
-    events_datas=json_request.get('events',[])
+    events_datas = json_request.get('events',[])
     user.id = id
-    user.name=name
+    user.name = name
     if information_datas is not None:
         user.information = information_datas
     if events_datas is not None:
         for events_data in events_datas:
-            event=Event()
-            for k,v in events_data.events():
-                #?????????????????????????????????????????????????????
+            event = Event()
+            for k, v in events_data.items():
                 if k in event.model:
-                    event.model[k]=v
+                    event.model[k] = v
             user.events.append(event)
     return user
 
@@ -57,31 +54,32 @@ def to_json_list(user):
     using = user.get('using', None)
     json_list = {
         '_id': _id,
-        'name ': name ,
+        'name ': name,
         'information': information,
-        'events':events,
+        'events': events,
         'using': using
     }
     return json_list
 
 def request_to_class_event(json_request):
     events = []
-    event=Event()
+    event = Event()
     event_id = json_request.get('event_id', None)
     time = json_request.get('time', None)
     value = json_request.get('value', None)
     descripe = json_request.get('descripe', None)
     event.event_id = event_id
-    event.time=time
-    event.value=value
-    event.descripe=descripe
+    event.time = time
+    event.value = value
+    event.descripe = descripe
     events.append(event)
     return events
 
+
 def update_event(mongo,events,condition=None):
-    event_datas=mongo.db.user.find(condition,{events:1})
+    event_datas = mongo.db.user.find(condition, {events: 1})
     events.append(event_datas)
-    mongo.db.user.update(condition,{"$set":{"events":events}})
+    mongo.db.user.update(condition, {"$set": {"events": events}})
     datas = mongo.db.user.find(condition)
     return datas
 

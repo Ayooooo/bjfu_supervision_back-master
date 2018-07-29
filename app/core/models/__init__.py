@@ -269,14 +269,13 @@ class Value(object):
 class User(object):
     def __init__(self):
         self.model={
-            'id':None,
-            'name':None,
-            'information':{
-                'birth':None,
-                'sex':None
+            'name': None,
+            'information': {
+                'birth': None,
+                'sex': None
             },
-            'events':[],
-            'using':True
+            'events': [],
+            'using': True
         }
         self.events = list()
 
@@ -285,8 +284,8 @@ class User(object):
         return self.model['id']
 
     @id.setter
-    def id(self,id_data):
-        self.model['id']=id_data
+    def id(self, id_data):
+        self.model['id'] = id_data
 
     @property
     def name(self):
@@ -320,14 +319,15 @@ class User(object):
             except:
                 pass
 
+
 class Event(object):
     def __int__(self):
         self.model = {
-            'event_id':None,
-            'time':None,
-            'value':None,
-            'discripe':None,
-            'event_using':True
+            'event_id': None,
+            'time': None,
+            'value': None,
+            'discripe': None,
+            'event_using': True
         }
 
     @property
