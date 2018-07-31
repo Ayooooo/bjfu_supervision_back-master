@@ -12,10 +12,12 @@ import psutil
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')or 'hard to guess string'
     PATIENTS_PRE_PAGE = 20
-    MONGO_URI = 'mongodb://localhost:27017/supervision'
+    #MONGO_URI = 'mongodb://localhost:27017/supervision'
+    MONGO_URI = 'mongodb://localhost:27017/db'
     MONGO_USERNAME = 'myadmin'
     MONGO_PASSWORD = 'secret'
-    MONGO_TEST_URI = 'mongodb://localhost:27017/supervision'
+    #MONGO_TEST_URI = 'mongodb://localhost:27017/supervision'
+    MONGO_TEST_URI = 'mongodb://localhost:27017/db'
     MAIL_DEBUG = True
     @staticmethod
     def init_app(app):

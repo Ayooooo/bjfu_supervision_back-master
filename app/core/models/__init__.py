@@ -277,7 +277,7 @@ class User(object):
             'events': [],
             'using': True
         }
-        self.events = list()
+        self.events= list()
 
     @property
     def id(self):
@@ -311,7 +311,7 @@ class User(object):
     def using(self, using_data):
         self.model['using'] = using_data
 
-    def events_to_dict(self):
+    def items_to_dict(self):
         for id, data in enumerate(self.events):
             try:
                 data.id = id
@@ -321,7 +321,7 @@ class User(object):
 
 
 class Event(object):
-    def __int__(self):
+    def __init__(self):
         self.model = {
             'event_id': None,
             'time': None,

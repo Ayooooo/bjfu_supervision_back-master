@@ -58,11 +58,11 @@ def get_users():
         'per_page': paginate.per_page
         })
 
-@user_blueprint.route('/users/<string:id>')
+@user_blueprint.route('/users/<string:_id>')
 def get_user(_id):
     from run import mongo
     try:
-        user_datas=find_user(mongo,{'_id':ObjectId(_id)})
+        user_datas=find_user(mongo,{'_id':{"$in":{ObjectId(_id)}}})
     except PyMongoError as e:
         return jsonify({
             'code': '500',
@@ -74,8 +74,8 @@ def get_user(_id):
         'data': [dict_serializable(user_data) for user_data in user_datas]
     })
 
-@user_blueprint.route('/users/<string:id>',methods=['DELETE'])
-def delete_user(_id):
+@user_blueprint.route('/users/<string:_id>',methods=['DELETE'])
+def delete_users(_id):
     from run import mongo
     try:
         delete_user(mongo,{'_id':ObjectId(_id)})
@@ -89,7 +89,7 @@ def delete_user(_id):
         'message': ''
     })
 
-@user_blueprint.route('/users/<string:id>',methods=['PUT'])
+@user_blueprint.route('/users/<string:_id>',methods=['PUT'])
 def change_user(_id):
     from run import mongo
     try:
@@ -99,7 +99,7 @@ def change_user(_id):
             'code':'500',
             'message':e
         })
-        user = request_to_class(request.json)
+    user = request_to_class(request.json)
     try:
         insert_user(mongo, user)
     except ServerSelectionTimeoutError as e:
@@ -114,12 +114,13 @@ def change_user(_id):
         'data': [dict_json]
     })
 
-@user_blueprint.route('/users/<string:id>/events',methods=['POST'])
+@user_blueprint.route('/users/<string:_id>/events',methods=['POST'])
 def new_event(_id):
     from run import mongo
-    events= request_to_class_event(request.json)
     try:
-        user_datas=update_event(mongo,events,{'_id':ObjectId(_id)})
+        user_datas=User()
+        user_datas_cursor=find_user(mongo,{'_id':{"$in":{ObjectId(_id)}}})
+        # user_datas=update_event(request.json,mongo,{'_id':ObjectId(_id)})
     except PyMongoError as e:
         return jsonify({
             'code': '500',
@@ -131,18 +132,18 @@ def new_event(_id):
         'data': [dict_serializable(user_data) for user_data in user_datas]
     })
 
-@user_blueprint.route('/users/<string:id>/events/<string:event_id>',methods=['POST'])
+@user_blueprint.route('/users/<string:_id>/events/<string:event_id>',methods=['GET'])
 def get_event(_id,event_id):
     from run import mongo
     try:
-        user_datas = find_user(mongo, {'_id': ObjectId(_id)})
+        user_datas = find_user(mongo, {'_id':{"$in":{ObjectId(_id)}}})
     except PyMongoError as e:
         return jsonify({
             'code': '500',
             'message':e
         })
     try:
-        event=find_event(mongo,{'event_id': ObjectId(event_id)})
+        event=find_event(mongo,{'event_id': {"$in":{event_id}}})
     except PyMongoError as e:
         return jsonify({
             'code': '500',
@@ -156,7 +157,7 @@ def get_event(_id,event_id):
 
     })
 
-@user_blueprint.route('/users/<string:id>/events/<string:event_id>',methods=['DELETE'])
+@user_blueprint.route('/users/<string:_id>/events/<string:event_id>',methods=['DELETE'])
 def delete_event(_id,event_id):
     from run import mongo
     try:
@@ -171,7 +172,7 @@ def delete_event(_id,event_id):
         'message': ''
     })
 
-@user_blueprint.route('/users/<string:id>/events/<string:event_id>',methods=['PUT'])
+@user_blueprint.route('/users/<string:_id>/events/<string:event_id>',methods=['PUT'])
 def change_event(_id,event_id):
     from run import mongo
     events = request_to_class_event(request.json)

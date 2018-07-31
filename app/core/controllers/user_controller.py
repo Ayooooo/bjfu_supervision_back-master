@@ -1,19 +1,18 @@
 from app.core.models import User,Event
 from flask_pymongo import ObjectId
-import json
 
 
 def find_user(mongo, condition=None):
     if condition is None:
         return mongo.db.user.find()
     if '_id' in condition:
-        condition['_id']['$in'] = [ObjectId(item) for item in condition['_id']['$in']]
+         condition['_id']['$in'] = [ObjectId(item) for item in condition['_id']['$in']]
     datas = mongo.db.user.find(condition)
     return datas
 
 
 def insert_user(mongo, user):
-    user.events_to_dict()
+    user.items_to_dict()
     mongo.db.user.insert(user.model)
 
 
@@ -32,10 +31,11 @@ def request_to_class(json_request):
     name = json_request.get('name', None)
     information_datas = json_request.get('information', {})
     events_datas = json_request.get('events',[])
-    user.id = id
     user.name = name
     if information_datas is not None:
-        user.information = information_datas
+        for k, v in information_datas.items():
+            if k in user.model['information']:
+                user.model['information'][k] = v
     if events_datas is not None:
         for events_data in events_datas:
             event = Event()
@@ -62,24 +62,24 @@ def to_json_list(user):
     return json_list
 
 def request_to_class_event(json_request):
-    events = []
     event = Event()
     event_id = json_request.get('event_id', None)
     time = json_request.get('time', None)
     value = json_request.get('value', None)
-    descripe = json_request.get('descripe', None)
+    discripe = json_request.get('discripe', None)
     event.event_id = event_id
     event.time = time
     event.value = value
-    event.descripe = descripe
-    events.append(event)
-    return events
+    event.discripe = discripe
+    return event
 
 
-def update_event(mongo,events,condition=None):
-    event_datas = mongo.db.user.find(condition, {events: 1})
-    events.append(event_datas)
-    mongo.db.user.update(condition, {"$set": {"events": events}})
+def update_event(json_request,mongo,condition=None):
+    event = request_to_class_event(json_request)
+    user_datas = mongo.db.user.find(condition)
+    event_datas=user_datas['events']
+    event_datas.append(event)
+    mongo.db.user.update(condition, {"$set": {"events": event_datas}})
     datas = mongo.db.user.find(condition)
     return datas
 
