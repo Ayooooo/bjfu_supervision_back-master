@@ -3,7 +3,7 @@ from flask import request,jsonify,url_for,json
 from pymongo.errors import ServerSelectionTimeoutError,PyMongoError
 from app.core.controllers.common_controller import dict_serializable, UrlCondition, Paginate, sort_limit
 from flask_pymongo import ObjectId
-from app.core.controllers.user_controller import to_json_list, find_user, delete_user, insert_user, request_to_class,request_to_class_event,update_event,find_event,delete_event
+from app.core.controllers.user_controller import to_json_list, find_user, delete_user, insert_user, request_to_class,update_user,request_to_class_event,update_event,find_event,delete_event
 
 
 @user_blueprint.route('/users',methods=['POST'])
@@ -93,34 +93,25 @@ def delete_users(_id):
 def change_user(_id):
     from run import mongo
     try:
-        delete_user(mongo, {'_id':ObjectId(_id)})
+        update_user(mongo,{'_id':ObjectId(_id)},request.json)
     except PyMongoError as e:
         return jsonify({
             'code':'500',
             'message':e
         })
-    user = request_to_class(request.json)
-    try:
-        insert_user(mongo, user)
-    except ServerSelectionTimeoutError as e:
-        return jsonify({
-            'code': '500',
-            'message': e
-        })
-    dict_json = dict_serializable(user.model)
+    users=find_user(mongo,{'_id':{"$in":{ObjectId(_id)}}})
     return jsonify({
         'code': '200',
         'message': '',
-        'data': [dict_json]
+        'data': [dict_serializable(user) for user in users]
     })
 
 @user_blueprint.route('/users/<string:_id>/events',methods=['POST'])
 def new_event(_id):
     from run import mongo
     try:
-        user_datas=User()
-        user_datas_cursor=find_user(mongo,{'_id':{"$in":{ObjectId(_id)}}})
-        # user_datas=update_event(request.json,mongo,{'_id':ObjectId(_id)})
+        user_datas=update_event(request.json,mongo,{'_id':{ObjectId(_id)}})
+    # user_datas=update_event(request.json,mongo,{'_id':{ObjectId(_id)},"events":{1}})
     except PyMongoError as e:
         return jsonify({
             'code': '500',
@@ -143,7 +134,7 @@ def get_event(_id,event_id):
             'message':e
         })
     try:
-        event=find_event(mongo,{'event_id': {"$in":{event_id}}})
+        event=find_event(mongo,{'event_id': event_id,'_id':_id})
     except PyMongoError as e:
         return jsonify({
             'code': '500',

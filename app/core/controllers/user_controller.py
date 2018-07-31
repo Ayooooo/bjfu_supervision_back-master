@@ -1,6 +1,7 @@
 from app.core.models import User,Event
 from flask_pymongo import ObjectId
-
+import json
+from app.core.controllers.common_controller import dict_serializable
 
 def find_user(mongo, condition=None):
     if condition is None:
@@ -45,6 +46,14 @@ def request_to_class(json_request):
             user.events.append(event)
     return user
 
+def update_user(mongo, condition=None, change_items = None):
+    if condition is None:
+        return False
+    try:
+        mongo.db.user.update(condition, {"$set":change_items})
+    except:
+        return False
+    return True
 
 def to_json_list(user):
     _id = user.get('_id', None)
@@ -76,10 +85,10 @@ def request_to_class_event(json_request):
 
 def update_event(json_request,mongo,condition=None):
     event = request_to_class_event(json_request)
-    user_datas = mongo.db.user.find(condition)
-    event_datas=user_datas['events']
-    event_datas.append(event)
-    mongo.db.user.update(condition, {"$set": {"events": event_datas}})
+    user_datas_cursor = mongo.db.user.find(condition)
+    user_data={"data":[dict_serializable(user_datas) for user_datas in user_datas_cursor]}
+    user_data["events"].append(event)
+    mongo.db.user.update(condition, {"$set": {"events": user_data["events"]}})
     datas = mongo.db.user.find(condition)
     return datas
 
