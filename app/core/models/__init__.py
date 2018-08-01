@@ -314,7 +314,7 @@ class User(object):
     def items_to_dict(self):
         for id, data in enumerate(self.events):
             try:
-                data.id = id
+                data.event_id = id
                 self.model['events'].append(data.model)
             except:
                 pass

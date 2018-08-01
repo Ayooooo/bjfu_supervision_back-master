@@ -1,13 +1,20 @@
 from app.core.models import User,Event
 from flask_pymongo import ObjectId
-import json
-from app.core.controllers.common_controller import dict_serializable
 
-def find_user(mongo, condition=None):
+def find_users(mongo,condition=None):
+    condition['using']=True
     if condition is None:
         return mongo.db.user.find()
     if '_id' in condition:
-         condition['_id']['$in'] = [ObjectId(item) for item in condition['_id']['$in']]
+        condition['_id']['$in']=[ObjectId(item) for item in condition['_id']['$in']]
+    datas=mongo.db.user.find(condition)
+    return datas
+
+def find_user(mongo, _id):
+    try:
+        condition={'using':True,'_id':ObjectId(_id)}
+    except:
+        return None
     datas = mongo.db.user.find(condition)
     return datas
 
@@ -60,13 +67,11 @@ def to_json_list(user):
     name = user.get('name', None)
     information = user.get('information', {})
     events=user.get('events',[])
-    using = user.get('using', None)
     json_list = {
         '_id': _id,
         'name ': name,
         'information': information,
-        'events': events,
-        'using': using
+        'events': events
     }
     return json_list
 
@@ -82,23 +87,67 @@ def request_to_class_event(json_request):
     event.discripe = discripe
     return event
 
+def number_event(events):
+    for id, data in enumerate(events):
+        try:
+            data["event_id"] = id
+        except:
+            pass
 
-def update_event(json_request,mongo,condition=None):
-    event = request_to_class_event(json_request)
-    user_datas_cursor = mongo.db.user.find(condition)
-    user_data={"data":[dict_serializable(user_datas) for user_datas in user_datas_cursor]}
-    user_data["events"].append(event)
-    mongo.db.user.update(condition, {"$set": {"events": user_data["events"]}})
-    datas = mongo.db.user.find(condition)
-    return datas
-
-def find_event(mongo,condition):
-    event = mongo.db.user.find(condition,{"events":1})
-    return event
-
-def delete_event(mongo,condition):
+def insert_event(json_request,mongo,_id):
     try:
-        mongo.db.user.update(condition, {"$set":{"event_using":False}})
+        condition={'using':True,'_id':ObjectId(_id)}
+    except:
+        return None
+    event = request_to_class_event(json_request)
+    user_datas = mongo.db.user.find_one(condition)
+    user_datas["events"].append(event.model)
+    number_event(user_datas["events"])
+    mongo.db.user.update(condition, {"$set": {"events": user_datas["events"]}})
+    return True
+
+def find_event(mongo,_id,event_id):
+    try:
+        condition_user={'using':True,'_id':ObjectId(_id)}
+    except:
+        return None
+    user_datas = mongo.db.user.find_one(condition_user)
+    if user_datas is None:
+        return None
+    for event_data in user_datas["events"]:
+        if event_data["event_id"]==event_id:
+            return event_data
+    return None
+
+def delete_event(mongo,_id,event_id):
+    try:
+        condition_user={'using':True,'_id':ObjectId(_id)}
     except:
         return False
+    user_datas = mongo.db.user.find_one(condition_user)
+    if user_datas is None:
+        return False
+    for event_data in user_datas["events"]:
+        if event_data["event_id"]==event_id:
+            event_data["event_using"]=False
+            break
+    try:
+        mongo.db.user.update(condition_user, {"$set":{"events":user_datas["events"]}})
+    except:
+        return False
+
+def update_event(mongo,_id,event_id,json_request):
+    event = request_to_class_event(json_request)
+    try:
+        condition_user={'using':True,'_id':ObjectId(_id)}
+    except:
+        return False
+    user_datas = mongo.db.user.find_one(condition_user)
+    for event_data in user_datas["events"]:
+        if event_data["event_id"]==event_id:
+            user_datas["events"].remove(event_data)
+            break
+    user_datas["events"].append(event.model)
+    number_event(user_datas["events"])
+    mongo.db.user.update(condition_user, {"$set": {"events": user_datas["events"]}})
     return True
